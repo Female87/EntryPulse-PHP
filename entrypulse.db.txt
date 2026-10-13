@@ -1,0 +1,324 @@
+-- ============================================================
+-- ENTRYPULSE DATABASE BACKUP
+-- phpMyAdmin: select entrypulse_db, open Import, and choose this file.
+-- Do not paste the entire backup into the SQL query editor.
+-- Restoring this file drops and recreates the backed-up tables.
+-- ============================================================
+-- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
+--
+-- Host: 127.0.0.1    Database: entrypulse_db
+-- ------------------------------------------------------
+-- Server version	10.4.32-MariaDB
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `ep_orders`
+--
+
+DROP TABLE IF EXISTS `ep_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `ep_orders` (
+  `order_id` varchar(50) NOT NULL,
+  `user_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `event_id` varchar(50) NOT NULL,
+  `event_artist` varchar(100) NOT NULL,
+  `event_title` varchar(150) NOT NULL,
+  `venue_name` varchar(150) NOT NULL,
+  `seat_id` varchar(100) NOT NULL,
+  `seat_label` varchar(150) NOT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `payment_method` varchar(30) NOT NULL,
+  `ticket_serial` varchar(100) NOT NULL,
+  `order_status` varchar(20) NOT NULL DEFAULT 'ACTIVE',
+  `purchased_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`order_id`),
+  UNIQUE KEY `ticket_serial` (`ticket_serial`),
+  KEY `user_orders` (`user_id`,`purchased_at`),
+  KEY `ep_orders_seat_fk` (`seat_id`),
+  CONSTRAINT `ep_orders_seat_fk` FOREIGN KEY (`seat_id`) REFERENCES `ep_seat_inventory` (`seat_id`),
+  CONSTRAINT `ep_orders_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ep_orders`
+--
+
+LOCK TABLES `ep_orders` WRITE;
+/*!40000 ALTER TABLE `ep_orders` DISABLE KEYS */;
+INSERT INTO `ep_orders` VALUES ('ord_de6deab0e37b3db09fe01920','usr_102','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','SB19-PAG-VIP-B-R2-S6','VIP B - Row 2, Seat 6',15000.00,'GCASH','EP-394F2FCCBA1A6F54','ACTIVE','2026-10-13 10:26:18');
+/*!40000 ALTER TABLE `ep_orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ep_seat_inventory`
+--
+
+DROP TABLE IF EXISTS `ep_seat_inventory`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `ep_seat_inventory` (
+  `seat_id` varchar(100) NOT NULL,
+  `event_id` varchar(50) NOT NULL,
+  `event_artist` varchar(100) NOT NULL,
+  `event_title` varchar(150) NOT NULL,
+  `venue_name` varchar(150) NOT NULL,
+  `section_id` varchar(30) NOT NULL,
+  `section_name` varchar(80) NOT NULL,
+  `seat_label` varchar(150) NOT NULL,
+  `base_price` decimal(10,2) NOT NULL,
+  `status` varchar(20) NOT NULL DEFAULT 'AVAILABLE',
+  `locked_by_user_id` varchar(50) DEFAULT NULL,
+  `lock_expires_at` datetime DEFAULT NULL,
+  `ticket_serial` varchar(100) DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`seat_id`),
+  UNIQUE KEY `ticket_serial` (`ticket_serial`),
+  KEY `event_status` (`event_id`,`status`),
+  KEY `lock_expiry` (`lock_expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ep_seat_inventory`
+--
+
+LOCK TABLES `ep_seat_inventory` WRITE;
+/*!40000 ALTER TABLE `ep_seat_inventory` DISABLE KEYS */;
+INSERT INTO `ep_seat_inventory` VALUES ('SB19-PAG-GA-R1-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 1, Seat 1',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R1-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 1, Seat 2',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R1-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 1, Seat 3',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R1-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 1, Seat 4',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R1-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 1, Seat 5',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R1-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 1, Seat 6',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R2-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 2, Seat 1',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R2-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 2, Seat 2',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R2-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 2, Seat 3',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R2-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 2, Seat 4',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R2-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 2, Seat 5',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-GA-R2-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','GA','Gen Ad','Gen Ad - Row 2, Seat 6',2500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R1-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 1',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R1-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 2',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R1-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 3',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R1-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 4',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R1-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 5',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R1-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 6',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:26:03'),('SB19-PAG-LB-1-R2-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 1',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R2-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 2',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R2-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 3',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R2-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 4',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R2-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 5',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-1-R2-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 6',8000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R1-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 1',6800.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R1-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 2',6800.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R1-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 3',6800.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R1-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 4',6800.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R1-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 5',6800.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R1-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 6',6800.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R2-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 1',6800.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R2-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 2',6800.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R2-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 3',6800.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R2-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 4',6800.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R2-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 5',6800.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-LB-2-R2-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 6',6800.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R1-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 1, Seat 1',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R1-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 1, Seat 2',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R1-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 1, Seat 3',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R1-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 1, Seat 4',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R1-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 1, Seat 5',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R1-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 1, Seat 6',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R2-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 2, Seat 1',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R2-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 2, Seat 2',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R2-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 2, Seat 3',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R2-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 2, Seat 4',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R2-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 2, Seat 5',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-UB-R2-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','UB','Upper Box','Upper Box - Row 2, Seat 6',3750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R1-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 1, Seat 1',15000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R1-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 1, Seat 2',15000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R1-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 1, Seat 3',15000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R1-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 1, Seat 4',15000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R1-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 1, Seat 5',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R1-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 1, Seat 6',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R2-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 2, Seat 1',15000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R2-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 2, Seat 2',15000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R2-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 2, Seat 3',15000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R2-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 2, Seat 4',15000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R2-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 2, Seat 5',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-A-R2-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-A','VIP A','VIP A - Row 2, Seat 6',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R1-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 1, Seat 1',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R1-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 1, Seat 2',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R1-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 1, Seat 3',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:26:00'),('SB19-PAG-VIP-B-R1-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 1, Seat 4',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R1-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 1, Seat 5',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R1-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 1, Seat 6',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R2-S1','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 2, Seat 1',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R2-S2','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 2, Seat 2',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R2-S3','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 2, Seat 3',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R2-S4','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 2, Seat 4',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R2-S5','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 2, Seat 5',15000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:41'),('SB19-PAG-VIP-B-R2-S6','SB19-PAG','SB19','Pagtatag / Simula at Wakas','Smart Araneta Coliseum','VIP-B','VIP B','VIP B - Row 2, Seat 6',15000.00,'SOLD',NULL,NULL,'EP-394F2FCCBA1A6F54','2026-10-13 10:26:18'),('TS-ERAS-GA-R1-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 1, Seat 1',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R1-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 1, Seat 2',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R1-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 1, Seat 3',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R1-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 1, Seat 4',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R1-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 1, Seat 5',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R1-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 1, Seat 6',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R2-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 2, Seat 1',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R2-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 2, Seat 2',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R2-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 2, Seat 3',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R2-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 2, Seat 4',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R2-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 2, Seat 5',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-GA-R2-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','GA','Gen Ad','Gen Ad - Row 2, Seat 6',6500.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R1-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 1',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R1-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 2',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R1-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 3',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R1-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 4',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R1-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 5',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R1-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 1, Seat 6',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R2-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 1',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R2-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 2',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R2-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 3',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R2-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 4',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R2-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 5',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-1-R2-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-1','Lower Box 1','Lower Box 1 - Row 2, Seat 6',22000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R1-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 1',18700.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R1-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 2',18700.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R1-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 3',18700.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R1-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 4',18700.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R1-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 5',18700.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R1-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 1, Seat 6',18700.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R2-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 1',18700.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R2-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 2',18700.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R2-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 3',18700.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R2-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 4',18700.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R2-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 5',18700.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-LB-2-R2-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','LB-2','Lower Box 2','Lower Box 2 - Row 2, Seat 6',18700.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R1-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 1, Seat 1',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R1-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 1, Seat 2',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R1-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 1, Seat 3',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R1-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 1, Seat 4',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R1-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 1, Seat 5',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R1-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 1, Seat 6',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R2-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 2, Seat 1',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R2-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 2, Seat 2',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R2-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 2, Seat 3',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R2-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 2, Seat 4',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R2-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 2, Seat 5',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-UB-R2-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','UB','Upper Box','Upper Box - Row 2, Seat 6',9750.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R1-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 1, Seat 1',50000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R1-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 1, Seat 2',50000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R1-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 1, Seat 3',50000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R1-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 1, Seat 4',50000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R1-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 1, Seat 5',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R1-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 1, Seat 6',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R2-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 2, Seat 1',50000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R2-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 2, Seat 2',50000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R2-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 2, Seat 3',50000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R2-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 2, Seat 4',50000.00,'SOLD',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R2-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 2, Seat 5',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-A-R2-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-A','VIP A','VIP A - Row 2, Seat 6',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R1-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 1, Seat 1',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R1-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 1, Seat 2',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R1-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 1, Seat 3',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R1-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 1, Seat 4',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R1-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 1, Seat 5',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R1-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 1, Seat 6',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R2-S1','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 2, Seat 1',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R2-S2','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 2, Seat 2',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R2-S3','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 2, Seat 3',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R2-S4','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 2, Seat 4',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R2-S5','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 2, Seat 5',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21'),('TS-ERAS-VIP-B-R2-S6','TS-ERAS','Taylor Swift','The Eras Tour (Custom)','Philippine Stadium (Bulacan)','VIP-B','VIP B','VIP B - Row 2, Seat 6',50000.00,'AVAILABLE',NULL,NULL,NULL,'2026-10-13 10:21:21');
+/*!40000 ALTER TABLE `ep_seat_inventory` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `events`
+--
+
+DROP TABLE IF EXISTS `events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `events` (
+  `event_id` varchar(50) NOT NULL,
+  `artist_name` varchar(100) NOT NULL,
+  `tour_title` varchar(150) NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `venue_name` varchar(150) NOT NULL,
+  `event_date` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `status` varchar(20) DEFAULT 'UPCOMING',
+  PRIMARY KEY (`event_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `events`
+--
+
+LOCK TABLES `events` WRITE;
+/*!40000 ALTER TABLE `events` DISABLE KEYS */;
+INSERT INTO `events` VALUES ('evt_001','Taylor Swift','The Eras Tour 2026','cat-intl','Philippine Arena','2026-11-20 11:00:00','UPCOMING'),('evt_002','SB19','PAGTATAG! World Tour','cat-opm','Smart Araneta Coliseum','2026-10-12 12:00:00','UPCOMING'),('evt_003','Coldplay','Music of the Spheres','cat-intl','MOA Arena','2026-12-05 10:30:00','UPCOMING');
+/*!40000 ALTER TABLE `events` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `gate_passes`
+--
+
+DROP TABLE IF EXISTS `gate_passes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `gate_passes` (
+  `pass_id` varchar(50) NOT NULL,
+  `transaction_id` varchar(50) DEFAULT NULL,
+  `seat_id` varchar(50) DEFAULT NULL,
+  `qr_token_hash` varchar(255) NOT NULL,
+  `access_status` varchar(20) DEFAULT 'READY',
+  `scanned_at` timestamp NULL DEFAULT NULL,
+  `turnstile_gate` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`pass_id`),
+  KEY `transaction_id` (`transaction_id`),
+  KEY `seat_id` (`seat_id`),
+  CONSTRAINT `gate_passes_ibfk_1` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`transaction_id`) ON DELETE CASCADE,
+  CONSTRAINT `gate_passes_ibfk_2` FOREIGN KEY (`seat_id`) REFERENCES `seats` (`seat_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `gate_passes`
+--
+
+LOCK TABLES `gate_passes` WRITE;
+/*!40000 ALTER TABLE `gate_passes` DISABLE KEYS */;
+INSERT INTO `gate_passes` VALUES ('gp_9001','tx_8800','st_103','QR_TS_2026_8800_SEC_A1_03','GRANTED','2026-09-20 10:45:12','GATE_04_NORTH'),('gp_9002','tx_8801','st_101','QR_TS_2026_8801_SEC_A1_01','READY',NULL,NULL);
+/*!40000 ALTER TABLE `gate_passes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `seat_tiers`
+--
+
+DROP TABLE IF EXISTS `seat_tiers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `seat_tiers` (
+  `tier_id` varchar(50) NOT NULL,
+  `event_id` varchar(50) DEFAULT NULL,
+  `tier_name` varchar(50) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `perks_description` text DEFAULT NULL,
+  PRIMARY KEY (`tier_id`),
+  KEY `event_id` (`event_id`),
+  CONSTRAINT `seat_tiers_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `seat_tiers`
+--
+
+LOCK TABLES `seat_tiers` WRITE;
+/*!40000 ALTER TABLE `seat_tiers` DISABLE KEYS */;
+INSERT INTO `seat_tiers` VALUES ('tr_001','evt_001','VIP Soundcheck',18500.00,'Front Row access + Soundcheck Pass'),('tr_002','evt_001','Lower Box',10500.00,'Elevated prime view seat'),('tr_003','evt_001','Upper Box',5200.00,'Standard seated ticket'),('tr_004','evt_002','VIP Standing',12000.00,'Floor standing access'),('tr_005','evt_002','Patron',7500.00,'Reserved seating near stage');
+/*!40000 ALTER TABLE `seat_tiers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `seats`
+--
+
+DROP TABLE IF EXISTS `seats`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `seats` (
+  `seat_id` varchar(50) NOT NULL,
+  `event_id` varchar(50) DEFAULT NULL,
+  `tier_id` varchar(50) DEFAULT NULL,
+  `section_code` varchar(20) NOT NULL,
+  `seat_label` varchar(20) NOT NULL,
+  `status` varchar(20) DEFAULT 'AVAILABLE',
+  `locked_by_user_id` varchar(50) DEFAULT NULL,
+  `lock_expires_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`seat_id`),
+  KEY `event_id` (`event_id`),
+  KEY `tier_id` (`tier_id`),
+  KEY `locked_by_user_id` (`locked_by_user_id`),
+  CONSTRAINT `seats_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE,
+  CONSTRAINT `seats_ibfk_2` FOREIGN KEY (`tier_id`) REFERENCES `seat_tiers` (`tier_id`) ON DELETE CASCADE,
+  CONSTRAINT `seats_ibfk_3` FOREIGN KEY (`locked_by_user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `seats`
+--
+
+LOCK TABLES `seats` WRITE;
+/*!40000 ALTER TABLE `seats` DISABLE KEYS */;
+INSERT INTO `seats` VALUES ('st_101','evt_001','tr_001','SEC_A1','A-01','HELD','usr_102','2026-09-20 14:01:44'),('st_102','evt_001','tr_001','SEC_A1','A-02','AVAILABLE',NULL,NULL),('st_103','evt_001','tr_001','SEC_A1','A-03','SOLD',NULL,NULL),('st_104','evt_001','tr_002','SEC_B1','B-01','AVAILABLE',NULL,NULL),('st_105','evt_001','tr_002','SEC_B1','B-02','HELD','usr_102','2026-09-20 14:01:44');
+/*!40000 ALTER TABLE `seats` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `transactions`
+--
+
+DROP TABLE IF EXISTS `transactions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `transactions` (
+  `transaction_id` varchar(50) NOT NULL,
+  `user_id` varchar(50) DEFAULT NULL,
+  `event_id` varchar(50) DEFAULT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `payment_method` varchar(30) NOT NULL,
+  `transaction_status` varchar(20) DEFAULT 'PENDING_PAYMENT',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`transaction_id`),
+  KEY `user_id` (`user_id`),
+  KEY `event_id` (`event_id`),
+  CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  CONSTRAINT `transactions_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `transactions`
+--
+
+LOCK TABLES `transactions` WRITE;
+/*!40000 ALTER TABLE `transactions` DISABLE KEYS */;
+INSERT INTO `transactions` VALUES ('tx_8800','usr_103','evt_002',12000.00,'MASTERCARD','COMPLETED','2026-09-18 06:20:00'),('tx_8801','usr_102','evt_001',29000.00,'GCASH','PENDING_PAYMENT','2026-09-20 13:51:44');
+/*!40000 ALTER TABLE `transactions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `users` (
+  `user_id` varchar(50) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `role` varchar(20) DEFAULT 'CUSTOMER',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES ('usr_101','admin','admin@entrypulse.com','$2y$10$KNqjCON6PaFcaU.ba1.RZeA02HGlgXfuY8dVTzuTLnQPrtY5f58Ee','ADMIN','2026-01-01 00:00:00'),('usr_102','dwight','dwight@entrypulse.com','$2y$10$suPu7e2qH9N3jVn8YSTgh.1JIEI8ZRSZEsrPsiBlOSXKGeQ8BM56K','CUSTOMER','2026-02-15 02:30:00'),('usr_103','ruellyn','ruellyn@entrypulse.com','$2y$10$DMsW28QSgxaYLyO02lQ3w.OIDNRRnmaK4XGj/WnXO.05JNCcqF9vO','CUSTOMER','2026-02-16 03:15:00');
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-10-13 18:26:35
+
+-- EntryPulse login credentials reset.
+-- admin / admin
+-- dwight / kiannady
+-- ruellyn / user123
+-- Hashes generated with PHP password_hash(..., PASSWORD_DEFAULT).
+UPDATE `users`
+SET `password_hash` = CASE `username`
+  WHEN 'admin' THEN '$2y$10$KNqjCON6PaFcaU.ba1.RZeA02HGlgXfuY8dVTzuTLnQPrtY5f58Ee'
+  WHEN 'dwight' THEN '$2y$10$suPu7e2qH9N3jVn8YSTgh.1JIEI8ZRSZEsrPsiBlOSXKGeQ8BM56K'
+  WHEN 'ruellyn' THEN '$2y$10$DMsW28QSgxaYLyO02lQ3w.OIDNRRnmaK4XGj/WnXO.05JNCcqF9vO'
+  ELSE `password_hash`
+END,
+  `role` = CASE `username`
+  WHEN 'admin' THEN 'ADMIN'
+  WHEN 'dwight' THEN 'CUSTOMER'
+  WHEN 'ruellyn' THEN 'CUSTOMER'
+  ELSE `role`
+END
+WHERE `username` IN ('admin', 'dwight', 'ruellyn');
+
+-- END OF ENTRYPULSE DATABASE BACKUP
