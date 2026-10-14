@@ -29,24 +29,6 @@ if (($_GET['asset'] ?? '') === 'app-script') {
 	exit;
 }
 
-session_set_cookie_params([
-	'httponly' => true,
-	'samesite' => 'Lax',
-	'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-]);
-session_start();
-$isAdminPage = false;
-if (!empty($_SESSION['user_id'])) {
-	try {
-		require_once __DIR__ . '/config.php';
-		$roleQuery = db()->prepare('SELECT role FROM users WHERE user_id = ?');
-		$roleQuery->execute([$_SESSION['user_id']]);
-		$isAdminPage = strtoupper((string)$roleQuery->fetchColumn()) === 'ADMIN';
-	} catch (Throwable $error) {
-		$isAdminPage = false;
-	}
-}
-
 $frontendPath = __DIR__ . DIRECTORY_SEPARATOR . 'og files' . DIRECTORY_SEPARATOR . 'index.html';
 $frontendHtml = file_get_contents($frontendPath);
 $headPosition = stripos($frontendHtml ?: '', '<head>');
@@ -90,28 +72,8 @@ $frontendHtml = preg_replace(
 	1
 );
 
-if ($isAdminPage) {
-	$frontendHtml = preg_replace(
-		'~<section id="view-events" class="view-section active">.*?</section>~s',
-		'<div id="eventsGrid" hidden></div>',
-		$frontendHtml,
-		1
-	);
-	$frontendHtml = preg_replace(
-		'~<button class="nav-btn active" onclick="switchView\(\'events\'\)">.*?</button>~s',
-		'',
-		$frontendHtml,
-		1
-	);
-}
-
 $headPosition += strlen('<head>');
-$headInsert = "\n  <base href=\"og%20files/\">\n"
-	. "  <style>\n"
-	. "    body.admin-view:not(.admin-user-view) #navTabsContainer > button[onclick=\"switchView('events')\"],\n"
-	. "    body.admin-view:not(.admin-user-view) #view-events,\n"
-	. "    body.admin-view #adminViewToggleBtn { display: none !important; }\n"
-	. "  </style>";
+$headInsert = "\n  <base href=\"og%20files/\">\n";
 $frontendHtml = substr_replace($frontendHtml, $headInsert, $headPosition, 0);
 
 header('Content-Type: text/html; charset=utf-8');
