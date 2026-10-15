@@ -8,22 +8,10 @@ if (($_GET['asset'] ?? '') === 'app-script') {
 		http_response_code(500);
 		exit('Unable to load the EntryPulse application script.');
 	}
+	header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+	header('Pragma: no-cache');
+	header('Expires: 0');
 
-	$script = str_replace(
-		['Admin: Demo inventory reset to seed state', '-- ADMIN DEMO RESET:', 'Demo verification code: '],
-		['Admin: Inventory reset to seed state', '-- ADMIN RESET:', 'Verification code: '],
-		$script
-	);
-	$script = str_replace(
-		"document.body.classList.add('admin-view');",
-		"document.body.classList.add('admin-view');\n        if (!new URLSearchParams(window.location.search).has('adminLayout')) { window.location.replace(window.location.pathname + '?adminLayout=1'); return; }",
-		$script
-	);
-	$script = str_replace(
-		"apiRequest('logout').catch(() => {});",
-		"apiRequest('logout').finally(function () { if (new URLSearchParams(window.location.search).has('adminLayout')) window.location.replace(window.location.pathname); });",
-		$script
-	);
 	header('Content-Type: application/javascript; charset=utf-8');
 	echo $script;
 	exit;
@@ -49,9 +37,11 @@ $frontendHtml = str_replace(
 	['Local XAMPP app.', 'Developer Controls', 'Reset Sales', 'Events'],
 	$frontendHtml
 );
+$scriptPath = __DIR__ . DIRECTORY_SEPARATOR . 'og files' . DIRECTORY_SEPARATOR . 'script.js';
+$scriptVersion = is_file($scriptPath) ? (string)filemtime($scriptPath) : (string)time();
 $frontendHtml = str_replace(
 	'<script src="script.js"></script>',
-	'<script src="../index.php?asset=app-script"></script>',
+	'<script src="../index.php?asset=app-script&amp;v=' . $scriptVersion . '"></script>',
 	$frontendHtml
 );
 
@@ -77,4 +67,7 @@ $headInsert = "\n  <base href=\"og%20files/\">\n";
 $frontendHtml = substr_replace($frontendHtml, $headInsert, $headPosition, 0);
 
 header('Content-Type: text/html; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 echo $frontendHtml;
