@@ -1,0 +1,103 @@
+================================================================================
+ENTRYPULSE / SEATLOCK 360 — PROGRAMMER FLOWCHART
+Feature: Admin "Add New Event" & Automated 60-Seat Inventory Database Insertion
+================================================================================
+
+ [ TERMINAL (Oval / Start) ]
+ -------------------------------------------------------------------------------
+ START: Admin Add Event Request
+ Description: Administrator logs into EntryPulse with RBAC role = 'ADMIN'.
+              System unlocks the admin Events tab and displays the
+              "Add New Event" button.
+ -------------------------------------------------------------------------------
+        │
+        ▼ (Click Add New Event)
+
+ [ INPUT / OUTPUT (Parallelogram) ]
+ -------------------------------------------------------------------------------
+ INPUT: Event ID, Artist, Title, Venue & Pricing Tiers
+ Description: Admin fills out modal form with Event ID (e.g. OLIVIA-GUTS),
+              Artist Name, Tour Title, Venue, Category, and VIP / Lower /
+              Upper pricing tiers.
+ -------------------------------------------------------------------------------
+        │
+        ▼ (Submit Form: POST action=add-event)
+
+ [ DECISION (Diamond) ]
+ -------------------------------------------------------------------------------
+ DECISION: Are All Fields Valid & Unique?
+ Description: Backend validates that all required fields are present,
+              Event ID format is alphanumeric/hyphens, and pricing >= 0.
+ -------------------------------------------------------------------------------
+        │
+        ├─────────────────────────────┐
+        │ [No / Invalid]              │ [Yes / Valid]
+        ▼                             ▼
+ ( Display Error Toast )      [ PROCESS (Rectangle) ]
+                              --------------------------------------------------
+                              PROCESS: Initialize ACID Transaction
+                              Description: PHP backend starts an atomic
+                                           transaction via PDO (START TRANSACTION)
+                                           to ensure data consistency across
+                                           catalog and seat inventory.
+                              --------------------------------------------------
+                                     │
+                                     ▼
+                              [ DATABASE (Cylinder) ]
+                              --------------------------------------------------
+                              DATABASE: Insert into ep_event_catalog
+                              Description: Backend executes SQL INSERT into
+                                           `ep_event_catalog` with is_active = 1
+                                           and approved tier pricing.
+                              --------------------------------------------------
+                                     │
+                                     ▼
+                              [ DATABASE (Cylinder) ]
+                              --------------------------------------------------
+                              DATABASE: Auto-Generate 60 Seats in ep_seat_inventory
+                              Description: Backend loops through 6 sections
+                                           (VIP-A, VIP-B, LB-1, LB-2, UB, GA),
+                                           2 rows, and 6 seats per row, executing
+                                           60 INSERT IGNORE statements.
+                              --------------------------------------------------
+                                     │
+                                     ▼
+                              [ DATABASE (Cylinder) ]
+                              --------------------------------------------------
+                              DATABASE: Log Action in ep_admin_audit
+                              Description: Backend inserts audit trail record into
+                                           `ep_admin_audit` with timestamp and
+                                           admin actor ID.
+                              --------------------------------------------------
+                                     │
+                                     ▼
+                              [ DECISION (Diamond) ]
+                              --------------------------------------------------
+                              DECISION: SQL Execution Successful?
+                              Description: Checks for PDO exceptions or duplicate
+                                           entry error codes (e.g., Error 23000
+                                           for duplicate Event ID).
+                              --------------------------------------------------
+                                     │
+                                     ├─────────────────────────────┐
+                                     │ [Failure / Exception]       │ [Success]
+                                     ▼                             ▼
+                              ( ROLLBACK Transaction )     [ PROCESS (Rectangle) ]
+                              ( Return Error JSON )        ---------------------
+                                                           PROCESS: Commit Transaction
+                                                                    & Release Locks
+                                                           Description: Database
+                                                                        commits changes
+                                                                        permanently (COMMIT).
+                                                           ---------------------
+                                                                  │
+                                                                  ▼
+                                                           [ TERMINAL (Oval / End) ]
+                                                           -----------------------------
+                                                           END: Success Notification & UI Refresh
+                                                           Description: System displays success
+                                                                        toast notification: "Event
+                                                                        and 60 seats successfully
+                                                                        created." New event appears
+                                                                        immediately on the admin Events tab.
+                                                           -----------------------------

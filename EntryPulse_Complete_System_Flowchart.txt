@@ -1,0 +1,166 @@
+================================================================================
+ENTRYPULSE / SEATLOCK 360 — COMPREHENSIVE SYSTEM FLOWCHART
+Coordinating All Modules: Authentication, Admin Event Management, Seat Locking,
+Orders, Refunds, and Turnstile Gate Validation
+================================================================================
+
+--------------------------------------------------------------------------------
+MODULE 1: USER AUTHENTICATION & ROLE-BASED ACCESS CONTROL (RBAC)
+--------------------------------------------------------------------------------
+[ TERMINAL: Start Application / Login Page ]
+        │
+        ▼
+[ INPUT: Email & Password ]
+        │
+        ▼
+[ DECISION: Valid Credentials in `users` table? ]
+        │
+        ├─────────────────────────────┐
+        │ [Invalid]                   │ [Valid Credentials]
+        ▼                             ▼
+( Show Login Error )           [ DECISION: Check User Role (`role` column) ]
+                                      │
+                                      ├─────────────────────────────┐
+                                      │ ['ADMIN']                   │ ['CUSTOMER']
+                                      ▼                             ▼
+                               [ ADMIN DASHBOARD ]           [ CUSTOMER PORTAL ]
+                               - Unlocks Events Tab          - Browse Active Events
+                               - Shows "Add New Event"       - Select Seats & Book
+                               - Audit Logs Access
+
+
+--------------------------------------------------------------------------------
+MODULE 2: ADMIN EVENT MANAGEMENT & 60-SEAT AUTO-GENERATION
+--------------------------------------------------------------------------------
+[ ADMIN DASHBOARD: Click "Add New Event" Button ]
+        │
+        ▼
+[ INPUT / OUTPUT: Event ID, Artist, Title, Venue, Category & Pricing Tiers ]
+        │
+        ▼
+[ PROCESS: Start Atomic ACID Transaction (`START TRANSACTION`) ]
+        │
+        ▼
+[ DATABASE: Insert into `ep_event_catalog` ]
+        │
+        ▼
+[ DATABASE: Auto-Generate 60 Seats in `ep_seat_inventory` ]
+- Loops 6 Sections (VIP-A, VIP-B, LB-1, LB-2, UB, GA)
+- 2 Rows per section (R1-R2), 6 Seats per row (S1-S6)
+- Executes 60 `INSERT IGNORE` statements with appropriate section pricing
+        │
+        ▼
+[ DATABASE: Log Action in `ep_admin_audit` ]
+        │
+        ▼
+[ DECISION: Transaction Successful? ]
+        │
+        ├─────────────────────────────┐
+        │ [Exception / Error]         │ [Success]
+        ▼                             ▼
+( `ROLLBACK` Transaction )     [ PROCESS: Commit Transaction (`COMMIT`) ]
+                              - Refreshes Admin Event Grid
+                              - Displays Success Toast Notification
+
+
+--------------------------------------------------------------------------------
+MODULE 3: CUSTOMER SEAT SELECTION & PESSIMISTIC ROW-LEVEL LOCKING
+--------------------------------------------------------------------------------
+[ CUSTOMER PORTAL: Select Event & Open Seat Map Grid ]
+        │
+        ▼
+[ INPUT: Click Specific Seat (`seat_id`) ]
+        │
+        ▼
+[ PROCESS: Start Lock Transaction (`SELECT ... FOR UPDATE`) ]
+        │
+        ▼
+[ DECISION: Is Seat Status == 'AVAILABLE' (and not expired hold)? ]
+        │
+        ├─────────────────────────────┐
+        │ [No / Already HELD or SOLD] │ [Yes / Available]
+        ▼                             ▼
+( Show "Seat Unavailable" )    [ DATABASE: Update `ep_seat_inventory` ]
+                              - Set `status = 'HELD'`
+                              - Set `locked_by_user_id = Current_User`
+                              - Set `lock_expires_at = NOW() + 10 MINUTES`
+                              - `COMMIT` transaction
+                                     │
+                                     ▼
+                              [ START TIMER: 10-Minute Checkout Countdown ]
+
+
+--------------------------------------------------------------------------------
+MODULE 4: CHECKOUT & ORDER CREATION
+--------------------------------------------------------------------------------
+[ CUSTOMER: Complete Payment & Click "Confirm Booking" ]
+        │
+        ▼
+[ PROCESS: Start Checkout Transaction (`START TRANSACTION`) ]
+        │
+        ▼
+[ DATABASE: Insert into `ep_orders` ]
+- Generates unique `order_id` and unique cryptographic `ticket_serial`
+- Associates customer `user_id`, `event_id`, `seat_id`, and total amount paid
+        │
+        ▼
+[ DATABASE: Update `ep_seat_inventory` ]
+- Set `status = 'SOLD'`
+- Clear lock fields (`locked_by_user_id = NULL`, `lock_expires_at = NULL`)
+        │
+        ▼
+[ PROCESS: Commit Transaction (`COMMIT`) ]
+        │
+        ▼
+[ TERMINAL / OUTPUT: Display Booking Success & Ticket QR Code ]
+
+
+--------------------------------------------------------------------------------
+MODULE 5: REFUND & CANCELLATION WORKFLOW
+--------------------------------------------------------------------------------
+[ CUSTOMER / ADMIN: Request Order Refund ]
+        │
+        ▼
+[ PROCESS: Validate Order Eligibility ]
+        │
+        ▼
+[ DATABASE: Insert into `ep_refunds` ]
+- Records `refund_id`, `order_id`, `user_id`, and reason
+        │
+        ▼
+[ DATABASE: Update Associated Seat & Order Status ]
+- Set `ep_seat_inventory.status = 'AVAILABLE'` (Re-releases seat to inventory pool)
+- Mark order as refunded in `ep_orders`
+        │
+        ▼
+[ PROCESS: Commit Transaction (`COMMIT`) ]
+
+
+--------------------------------------------------------------------------------
+MODULE 6: TURNSTILE GATEPASS QR VALIDATION (ANTI-REPLAY)
+--------------------------------------------------------------------------------
+[ VENUE ENTRANCE: Gate Scanner Scans Ticket QR Code (`ticket_serial`) ]
+        │
+        ▼
+[ PROCESS: Query `ep_orders` & `ep_gate_scans` ]
+        │
+        ▼
+[ DECISION: Does `ticket_serial` exist in `ep_orders` and status is VALID? ]
+        │
+        ├─────────────────────────────┐
+        │ [Invalid / Unknown Ticket]  │ [Valid Order Found]
+        ▼                             ▼
+( Reject Entry: "INVALID" )    [ DECISION: Has `ticket_serial` already been scanned? ]
+                                      │
+                                      ├─────────────────────────────┐
+                                      │ [Yes / Already Scanned]     │ [No / First Scan]
+                                      ▼                             ▼
+                               ( Reject Entry: )             [ DATABASE: Insert into `ep_gate_scans` ]
+                               ( "DUPLICATE SCAN DETECTED" ) - Log `scan_id`, `ticket_serial`, `actor_id`
+                                                             - Set scan status = 'ALLOWED'
+                                                                    │
+                                                                    ▼
+                                                             [ TERMINAL: Allow Entry / Open Turnstile ]
+================================================================================
+END OF COMPREHENSIVE ENTRYPULSE SYSTEM FLOWCHART
+================================================================================
