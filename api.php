@@ -381,6 +381,76 @@ try {
         jsonResponse(['released' => $releasedCount]);
     }
 
+    if ($action === 'add-event') {
+        if ($user['role'] !== 'ADMIN') {
+            jsonResponse(['error' => 'Admin privileges are required for this action.'], 403);
+        }
+        $eventId = trim((string)($data['event_id'] ?? ''));
+        $artist = trim((string)($data['artist'] ?? ''));
+        $title = trim((string)($data['title'] ?? ''));
+        $venue = trim((string)($data['venue'] ?? ''));
+        $category = trim((string)($data['category'] ?? 'International'));
+        $vipPrice = (float)($data['vip_price'] ?? 0);
+        $lowerPrice = (float)($data['lower_price'] ?? 0);
+        $upperPrice = (float)($data['upper_price'] ?? 0);
+
+        if ($eventId === '' || $artist === '' || $title === '' || $venue === '') {
+            jsonResponse(['error' => 'All event fields are required.'], 422);
+        }
+        if (!preg_match('/\A[A-Za-z0-9_-]+\z/', $eventId)) {
+            jsonResponse(['error' => 'Event ID may only contain letters, numbers, hyphens, and underscores.'], 422);
+        }
+
+        $sections = [
+            'VIP-A' => ['name' => 'VIP A (Floor Front)', 'price' => $vipPrice],
+            'VIP-B' => ['name' => 'VIP B (Floor Soundboard)', 'price' => $vipPrice],
+            'LB-1' => ['name' => 'Lower Box 1', 'price' => $lowerPrice],
+            'LB-2' => ['name' => 'Lower Box 2', 'price' => round($lowerPrice * 0.85, 2)],
+            'UB' => ['name' => 'Upper Box', 'price' => round($upperPrice * 1.5, 2)],
+            'GA' => ['name' => 'Gen Ad', 'price' => $upperPrice],
+        ];
+
+        $pdo->beginTransaction();
+        try {
+            $insertCatalog = $pdo->prepare('INSERT INTO ep_event_catalog (event_id, event_artist, event_title, venue_name, category, vip_price, lower_price, upper_price, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)');
+            $insertCatalog->execute([$eventId, $artist, $title, $venue, $category, $vipPrice, $lowerPrice, $upperPrice]);
+
+            $insertSeat = $pdo->prepare("INSERT IGNORE INTO ep_seat_inventory (seat_id, event_id, event_artist, event_title, venue_name, section_id, section_name, seat_label, base_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'AVAILABLE')");
+
+            foreach ($sections as $secId => $sec) {
+                for ($r = 1; $r <= 2; $r++) {
+                    for ($s = 1; $s <= 6; $s++) {
+                        $seatId = "{$eventId}-{$secId}-R{$r}-S{$s}";
+                        $seatLabel = "{$sec['name']} - Row {$r}, Seat {$s}";
+                        $insertSeat->execute([
+                            $seatId,
+                            $eventId,
+                            $artist,
+                            $title,
+                            $venue,
+                            $secId,
+                            $sec['name'],
+                            $seatLabel,
+                            $sec['price'],
+                        ]);
+                    }
+                }
+            }
+
+            $audit = $pdo->prepare('INSERT INTO ep_admin_audit (audit_id, actor_user_id, action, details) VALUES (?, ?, ?, ?)');
+            $audit->execute([newId('audit'), $user['user_id'], 'CREATE_EVENT_WITH_INVENTORY', "Created event {$eventId} ({$artist} - {$title}) with 60 seats"]);
+
+            $pdo->commit();
+            jsonResponse(['success' => true, 'event_id' => $eventId, 'message' => 'Event and 60 seats successfully created.']);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            if ($e->getCode() === '23000') {
+                jsonResponse(['error' => 'An event with that ID already exists.'], 409);
+            }
+            throw $e;
+        }
+    }
+
     jsonResponse(['error' => 'Unknown API action.'], 404);
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {

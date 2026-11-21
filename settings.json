@@ -1,0 +1,31 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://localhost:20128",
+    "ANTHROPIC_AUTH_TOKEN": "omniroute",
+    "ANTHROPIC_MODEL": "auto/best-coding",
+    "ANTHROPIC_SMALL_FAST_MODEL": "auto/fast",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "auto/best-coding",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "auto/best-coding",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "auto/fast",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "Write",
+      "FileEdit",
+      "FileWrite",
+      "GlobTool",
+      "GrepTool",
+      "LS",
+      "View"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark"
+}
