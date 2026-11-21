@@ -2476,7 +2476,83 @@
       confirmButton.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Confirm Refund';
     }
 
-    // Add switchView hook for history
+    function openAddEventModal() {
+      document.getElementById('addEventModalOverlay').classList.add('active');
+    }
+
+    function closeAddEventModal() {
+      document.getElementById('addEventModalOverlay').classList.remove('active');
+    }
+
+    async function submitAddEvent(event) {
+      event.preventDefault();
+      const eventId = document.getElementById('newEventId').value.trim().toUpperCase();
+      const artist = document.getElementById('newEventArtist').value.trim();
+      const title = document.getElementById('newEventTitle').value.trim();
+      const venue = document.getElementById('newEventVenue').value.trim();
+      const category = document.getElementById('newEventCategory').value;
+      const vipPrice = parseFloat(document.getElementById('newEventVipPrice').value);
+      const lowerPrice = parseFloat(document.getElementById('newEventLowerPrice').value);
+      const upperPrice = parseFloat(document.getElementById('newEventUpperPrice').value);
+
+      if (!eventId || !artist || !title || !venue) {
+        notify('All fields are required.', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('btnAddEventSubmit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating Event & Seats...';
+
+      try {
+        const result = await apiRequest('add-event', {
+          event_id: eventId,
+          artist: artist,
+          title: title,
+          venue: venue,
+          category: category,
+          vip_price: vipPrice,
+          lower_price: lowerPrice,
+          upper_price: upperPrice
+        });
+
+        // Add event to CONCERT_DATASET locally so it shows up immediately in catalogs
+        if (!CONCERT_DATASET.some(e => e.id === eventId)) {
+          CONCERT_DATASET.unshift({
+            id: eventId,
+            artist: artist,
+            event: title,
+            category: category,
+            venue: venue,
+            capacity: "60 Seats",
+            date: "TBD • 8:00 PM",
+            vip: `₱${vipPrice.toLocaleString()}`,
+            lower: `₱${lowerPrice.toLocaleString()}`,
+            upper: `₱${upperPrice.toLocaleString()}`,
+            vipPriceNum: vipPrice,
+            lowerPriceNum: lowerPrice,
+            upperPriceNum: upperPrice,
+            featured: true
+          });
+        }
+
+        closeAddEventModal();
+        notify(`Successfully created event ${eventId} with 60 relational seats!`, 'success');
+        logSql(`<span class="sql-keyword">-- EVENT CREATED & 60 SEATS GENERATED:</span> Event '${eventId}' (${artist} - ${title}) added by admin.`);
+
+        // Reset form
+        document.getElementById('addEventForm').reset();
+
+        // Refresh admin dashboard & render events
+        renderAdminConsole();
+        renderEvents('ALL');
+      } catch (error) {
+        notify(error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-plus"></i> Create Event &amp; Seats';
+      }
+    }
     (function() {
       var _origSwitchView = switchView;
       window.switchView = function(viewName) {
@@ -2754,6 +2830,7 @@
         document.body.classList.add('admin-view');
         document.getElementById('adminNavBtn').style.display = '';
         document.getElementById('adminViewToggleBtn').style.display = '';
+        document.getElementById('addEventTabBtn').style.display = '';
         document.getElementById('navTabsContainer').classList.add('admin-mode');
         switchView('admin');
         notify('Admin console unlocked. Full system access granted.', 'success');
@@ -2762,6 +2839,7 @@
       } else {
         document.body.classList.remove('admin-view');
         document.body.classList.remove('admin-user-view');
+        document.getElementById('addEventTabBtn').style.display = 'none';
       }
     }
 
@@ -2873,6 +2951,7 @@
       // Restore consumer shell — hide admin tab, remove admin mode, show consumer tabs
       document.getElementById('adminNavBtn').style.display = 'none';
       document.getElementById('adminViewToggleBtn').style.display = 'none';
+      document.getElementById('addEventTabBtn').style.display = 'none';
       // Reset toggle button to default state
       document.getElementById('adminViewToggleBtn').innerHTML = '<i class="fa-solid fa-eye"></i> User View';
       document.getElementById('navTabsContainer').classList.remove('admin-mode');
