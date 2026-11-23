@@ -631,6 +631,11 @@
       const target = document.getElementById(`view-${viewName}`);
       if (target) target.classList.add('active');
 
+      // Save current view for refresh retention
+      try {
+        sessionStorage.setItem('entrypulse_current_view', viewName);
+      } catch (e) {}
+
       if (viewName === 'events') renderEvents();
 
       // Update Nav active style - find button by onclick attribute for accuracy
@@ -766,9 +771,12 @@
               <span class="event-badge-cat ${catClass}">
                 <i class="fa-solid fa-tag"></i> ${ev.category}
               </span>
-              <span style="font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono);">
-                <i class="fa-solid fa-users"></i> ${ev.capacity}
-              </span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono);">
+                  <i class="fa-solid fa-users"></i> ${ev.capacity}
+                </span>
+                ${adminReadOnly ? `<button onclick="openEditEventModal('${ev.id}')" title="Edit Event" style="background: none; border: none; color: var(--accent-primary); cursor: pointer; font-size: 0.9rem; padding: 2px;"><i class="fa-solid fa-pen-to-square"></i></button>` : ''}
+              </div>
             </div>
             <div class="event-artist">${ev.artist}</div>
             <div class="event-tour">${ev.event}</div>
@@ -798,9 +806,12 @@
             </div>
           </div>
 
-          <button class="btn-select-event" onclick="${adminReadOnly ? `showEventInfo('${ev.id}')` : `selectEventForSeatLock('${ev.id}')`}">
-            <i class="fa-solid ${buttonIcon}"></i> ${buttonLabel}
-          </button>
+          <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;">
+            <button class="btn-select-event" style="flex: 1; margin-top: 0;" onclick="${adminReadOnly ? `showEventInfo('${ev.id}')` : `selectEventForSeatLock('${ev.id}')`}">
+              <i class="fa-solid ${buttonIcon}"></i> ${buttonLabel}
+            </button>
+            ${adminReadOnly ? `<button class="btn-select-event" style="flex: 0 0 50px; margin-top: 0; background: #DC2626; color: white; padding: 0.7rem 0; display: flex; align-items: center; justify-content: center;" onclick="deleteEvent('${ev.id}')" title="Delete Event"><i class="fa-solid fa-trash" style="font-size: 1rem;"></i></button>` : ''}
+          </div>
         `;
         grid.appendChild(card);
       });
@@ -848,6 +859,94 @@
 
     function closeEventInfo() {
       document.getElementById('eventInfoOverlay').classList.remove('active');
+    }
+
+    async function deleteEvent(eventId) {
+      if (!isAdminAccount()) {
+        notify('Admin privileges required.', 'error');
+        return;
+      }
+      if (!confirm(`Are you sure you want to delete event ${eventId}? This will remove all associated seats and inventory.`)) {
+        return;
+      }
+      try {
+        await apiRequest('delete-event', { event_id: eventId });
+        // Remove from CONCERT_DATASET array
+        const idx = CONCERT_DATASET.findIndex(e => e.id === eventId);
+        if (idx !== -1) {
+          CONCERT_DATASET.splice(idx, 1);
+        }
+        renderEvents(activeEventCategory);
+        notify(`Event ${eventId} successfully deleted.`, 'success');
+        logSql(`<span class="sql-keyword">-- EVENT DELETED:</span> Event ID ${eventId} removed from catalog and inventory`);
+      } catch (error) {
+        notify(error.message, 'error');
+      }
+    }
+
+    function openEditEventModal(eventId) {
+      const ev = CONCERT_DATASET.find(e => e.id === eventId);
+      if (!ev) return;
+      document.getElementById('editEventId').value = ev.id;
+      document.getElementById('editEventArtist').value = ev.artist;
+      document.getElementById('editEventTitle').value = ev.event;
+      document.getElementById('editEventVenue').value = ev.venue;
+      document.getElementById('editVipPrice').value = ev.vipPriceNum;
+      document.getElementById('editLowerPrice').value = ev.lowerPriceNum;
+      document.getElementById('editUpperPrice').value = ev.upperPriceNum;
+      document.getElementById('editEventOverlay').classList.add('active');
+    }
+
+    function closeEditEventModal() {
+      document.getElementById('editEventOverlay').classList.remove('active');
+    }
+
+    async function submitEditEvent() {
+      const eventId = document.getElementById('editEventId').value;
+      const artist = document.getElementById('editEventArtist').value.trim();
+      const title = document.getElementById('editEventTitle').value.trim();
+      const venue = document.getElementById('editEventVenue').value.trim();
+      const vipPrice = parseFloat(document.getElementById('editVipPrice').value) || 0;
+      const lowerPrice = parseFloat(document.getElementById('editLowerPrice').value) || 0;
+      const upperPrice = parseFloat(document.getElementById('editUpperPrice').value) || 0;
+
+      if (!artist || !title || !venue) {
+        notify('All event fields are required.', 'error');
+        return;
+      }
+
+      try {
+        await apiRequest('edit-event', {
+          event_id: eventId,
+          artist: artist,
+          title: title,
+          venue: venue,
+          vip_price: vipPrice,
+          lower_price: lowerPrice,
+          upper_price: upperPrice
+        });
+
+        // Update local CONCERT_DATASET
+        const ev = CONCERT_DATASET.find(e => e.id === eventId);
+        if (ev) {
+          ev.artist = artist;
+          ev.event = title;
+          ev.venue = venue;
+          ev.vipPriceNum = vipPrice;
+          ev.lowerPriceNum = lowerPrice;
+          ev.upperPriceNum = upperPrice;
+          ev.vip = `₱${vipPrice.toLocaleString()}`;
+          ev.lower = `₱${lowerPrice.toLocaleString()}`;
+          ev.upper = `₱${upperPrice.toLocaleString()}`;
+        }
+
+        closeEditEventModal();
+        renderEvents(activeEventCategory);
+        notify(`Event ${eventId} successfully updated in database and UI!`, 'success');
+        logSql(`<span class="sql-keyword">-- EVENT UPDATED:</span> Event ID ${eventId} modified in database catalog & inventory`);
+      } catch (error) {
+        notify(error.message, 'error');
+      }
     }
 
     function filterCategory(cat) {
@@ -3145,12 +3244,23 @@
       notify('Password recovery is not configured for this local deployment.', 'warning');
     }
 
-    /* Require an explicit sign-in for each fresh browser page load. */
+    /* Check active session on page load for seamless persistence on refresh */
     window.addEventListener('DOMContentLoaded', async function() {
       try {
-        await apiRequest('logout');
-      } catch (error) {
-        notify('Could not clear the previous browser session: ' + error.message, 'warning');
+        const res = await apiRequest('me', null, 'GET');
+        if (res && res.user) {
+          const acc = accountFromApi(res.user);
+          currentUser = acc.email;
+          ACCOUNTS[currentUser] = acc;
+          finalizeLogin();
+          await loadPurchaseHistory();
+          await syncInventoryFromServer(activeEvent);
+          if (acc.role === 'admin') renderAdminConsole();
+          notify('Session restored for ' + acc.name, 'success');
+          return;
+        }
+      } catch (e) {
+        // Not logged in or session expired
       }
       openLoginModal();
     });
