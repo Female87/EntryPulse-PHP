@@ -381,6 +381,96 @@ try {
         jsonResponse(['released' => $releasedCount]);
     }
 
+    if ($action === 'edit-event') {
+        if ($user['role'] !== 'ADMIN') {
+            jsonResponse(['error' => 'Admin privileges are required for this action.'], 403);
+        }
+        $eventId = trim((string)($data['event_id'] ?? ''));
+        $artist = trim((string)($data['artist'] ?? ''));
+        $title = trim((string)($data['title'] ?? ''));
+        $venue = trim((string)($data['venue'] ?? ''));
+        $vipPrice = (float)($data['vip_price'] ?? 0);
+        $lowerPrice = (float)($data['lower_price'] ?? 0);
+        $upperPrice = (float)($data['upper_price'] ?? 0);
+
+        if ($eventId === '' || $artist === '' || $title === '' || $venue === '') {
+            jsonResponse(['error' => 'All event fields are required.'], 422);
+        }
+
+        $pdo->beginTransaction();
+        try {
+            $check = $pdo->prepare('SELECT event_id FROM ep_event_catalog WHERE event_id = ?');
+            $check->execute([$eventId]);
+            if (!$check->fetch()) {
+                $pdo->rollBack();
+                jsonResponse(['error' => 'Event not found.'], 404);
+            }
+
+            // Update catalog
+            $update = $pdo->prepare('UPDATE ep_event_catalog SET event_artist = ?, event_title = ?, venue_name = ?, vip_price = ?, lower_price = ?, upper_price = ? WHERE event_id = ?');
+            $update->execute([$artist, $title, $venue, $vipPrice, $lowerPrice, $upperPrice, $eventId]);
+
+            // Update seat inventory prices and details
+            $sections = [
+                'VIP-A' => $vipPrice,
+                'VIP-B' => $vipPrice,
+                'LB-1' => $lowerPrice,
+                'LB-2' => round($lowerPrice * 0.85, 2),
+                'UB' => round($upperPrice * 1.5, 2),
+                'GA' => $upperPrice,
+            ];
+            foreach ($sections as $secId => $price) {
+                $updSeat = $pdo->prepare('UPDATE ep_seat_inventory SET event_artist = ?, event_title = ?, venue_name = ?, base_price = ? WHERE event_id = ? AND section_id = ?');
+                $updSeat->execute([$artist, $title, $venue, $price, $eventId, $secId]);
+            }
+
+            $audit = $pdo->prepare('INSERT INTO ep_admin_audit (audit_id, actor_user_id, action, details) VALUES (?, ?, ?, ?)');
+            $audit->execute([newId('audit'), $user['user_id'], 'EDIT_EVENT', "Updated event {$eventId} ({$artist} - {$title})"]);
+
+            $pdo->commit();
+            jsonResponse(['success' => true, 'message' => 'Event updated successfully.']);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    if ($action === 'delete-event') {
+        if ($user['role'] !== 'ADMIN') {
+            jsonResponse(['error' => 'Admin privileges are required for this action.'], 403);
+        }
+        $eventId = trim((string)($data['event_id'] ?? ''));
+        if ($eventId === '') {
+            jsonResponse(['error' => 'An event ID is required.'], 422);
+        }
+
+        $pdo->beginTransaction();
+        try {
+            // Check if event exists
+            $check = $pdo->prepare('SELECT event_id, event_artist, event_title FROM ep_event_catalog WHERE event_id = ?');
+            $check->execute([$eventId]);
+            $ev = $check->fetch();
+            if (!$ev) {
+                $pdo->rollBack();
+                jsonResponse(['error' => 'Event not found.'], 404);
+            }
+
+            // Delete dependent records in correct foreign-key order
+            $pdo->prepare('DELETE FROM ep_orders WHERE event_id = ?')->execute([$eventId]);
+            $pdo->prepare('DELETE FROM ep_seat_inventory WHERE event_id = ?')->execute([$eventId]);
+            $pdo->prepare('DELETE FROM ep_event_catalog WHERE event_id = ?')->execute([$eventId]);
+
+            $audit = $pdo->prepare('INSERT INTO ep_admin_audit (audit_id, actor_user_id, action, details) VALUES (?, ?, ?, ?)');
+            $audit->execute([newId('audit'), $user['user_id'], 'DELETE_EVENT', "Deleted event {$eventId} ({$ev['event_artist']} - {$ev['event_title']})"]);
+
+            $pdo->commit();
+            jsonResponse(['success' => true, 'message' => 'Event successfully deleted.']);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
     if ($action === 'add-event') {
         if ($user['role'] !== 'ADMIN') {
             jsonResponse(['error' => 'Admin privileges are required for this action.'], 403);
@@ -457,5 +547,5 @@ try {
         $pdo->rollBack();
     }
     error_log((string)$error);
-    jsonResponse(['error' => 'The server could not complete the request. Check the PHP error log and database connection.'], 500);
+    jsonResponse(['error' => 'Database error: ' . $error->getMessage() . ' (Line: ' . $error->getLine() . ')'], 500);
 }
